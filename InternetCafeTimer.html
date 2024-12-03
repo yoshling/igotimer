@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internet Cafe Timer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f9;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .station {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 250px;
+        }
+
+        #timer-1, #timer-2 {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+
+        input {
+            width: 60px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .input-container {
+            margin-bottom: 20px;
+        }
+
+        .times-up {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<center>
+<img src="iGo.jpg"></center>
+    <div class="container">
+        <!-- Station 1 -->
+        <div class="station" id="station-1">
+            <h2>Station 1 Timer</h2>
+            <div id="timer-1">00:00</div>
+            <div class="input-container">
+                <label for="time-1">Enter time (minutes): </label>
+                <input type="number" id="time-1" value="5" min="1" />
+            </div>
+            <button id="start-1">Start</button>
+            <button id="reset-1">Reset</button>
+        </div>
+
+        <!-- Station 2 -->
+        <div class="station" id="station-2">
+            <h2>Station 2 Timer</h2>
+            <div id="timer-2">00:00</div>
+            <div class="input-container">
+                <label for="time-2">Enter time (minutes): </label>
+                <input type="number" id="time-2" value="5" min="1" />
+            </div>
+            <button id="start-2">Start</button>
+            <button id="reset-2">Reset</button>
+        </div>
+    </div>
+
+    <!-- Audio for sound notification -->
+    <audio id="beep-sound">
+        <source src="https://www.soundjay.com/button/beep-07.wav" type="audio/wav">
+    </audio>
+
+    <script>
+        let endTime1, endTime2;
+        let timer1Running = false, timer2Running = false;
+
+        const timer1Element = document.getElementById('timer-1');
+        const timer2Element = document.getElementById('timer-2');
+        const start1Button = document.getElementById('start-1');
+        const start2Button = document.getElementById('start-2');
+        const reset1Button = document.getElementById('reset-1');
+        const reset2Button = document.getElementById('reset-2');
+        const time1Input = document.getElementById('time-1');
+        const time2Input = document.getElementById('time-2');
+        const beepSound = document.getElementById('beep-sound');
+
+        // Function to update the timer display
+        function updateTimerDisplay(timerElement, remainingTime) {
+            const minutes = Math.floor(remainingTime / 60);
+            const seconds = remainingTime % 60;
+            timerElement.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        // Function to handle the timer end
+        function handleTimerEnd(timerElement, stationName) {
+            beepSound.play();
+            new Notification(`${stationName} Time's up! Please log out.`);
+            setTimeout(() => {
+                alert(`${stationName} timer has finished! Please log out.`);
+            }, 0); // Trigger alert after notification
+            timerElement.textContent = 'Time\'s Up!';
+        }
+
+        // Function to check and update timers
+        function checkTimers() {
+            const now = Date.now();
+
+            if (timer1Running) {
+                const remainingTime1 = Math.max(0, Math.floor((endTime1 - now) / 1000));
+                updateTimerDisplay(timer1Element, remainingTime1);
+
+                if (remainingTime1 <= 0) {
+                    handleTimerEnd(timer1Element, 'Station 1');
+                    timer1Running = false;
+                }
+            }
+
+            if (timer2Running) {
+                const remainingTime2 = Math.max(0, Math.floor((endTime2 - now) / 1000));
+                updateTimerDisplay(timer2Element, remainingTime2);
+
+                if (remainingTime2 <= 0) {
+                    handleTimerEnd(timer2Element, 'Station 2');
+                    timer2Running = false;
+                }
+            }
+
+            if (timer1Running || timer2Running) {
+                requestAnimationFrame(checkTimers);
+            }
+        }
+
+        // Function to start a timer
+        function startTimer(timerElement, inputElement, isRunning, endTimeVariable) {
+            const inputTime = parseInt(inputElement.value) * 60;
+            endTimeVariable = Date.now() + inputTime * 1000;
+
+            if (timerElement === timer1Element) {
+                endTime1 = endTimeVariable;
+                timer1Running = true;
+            } else {
+                endTime2 = endTimeVariable;
+                timer2Running = true;
+            }
+
+            requestAnimationFrame(checkTimers);
+        }
+
+        // Event listeners
+        start1Button.addEventListener('click', () => startTimer(timer1Element, time1Input, timer1Running, endTime1));
+        start2Button.addEventListener('click', () => startTimer(timer2Element, time2Input, timer2Running, endTime2));
+        reset1Button.addEventListener('click', () => {
+            timer1Running = false;
+            timer1Element.textContent = "00:00";
+        });
+        reset2Button.addEventListener('click', () => {
+            timer2Running = false;
+            timer2Element.textContent = "00:00";
+        });
+
+        // Request notification permission
+        if (Notification.permission !== 'granted') {
+            Notification.requestPermission();
+        }
+    </script>
+</body>
+</html>
