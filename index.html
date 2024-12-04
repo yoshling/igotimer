@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Internet Cafe Timer</title>
+    <title>Internet Cafe Stopwatch</title>
     <style>
         * {
             margin: 0;
@@ -42,20 +42,13 @@
             margin: 10px 0;
         }
 
-        input, button {
+        button {
             padding: 10px;
             margin: 5px;
             font-size: 16px;
             cursor: pointer;
             border: none;
             border-radius: 5px;
-        }
-
-        input {
-            width: 60px;
-        }
-
-        button {
             background-color: #4CAF50;
             color: white;
         }
@@ -64,143 +57,92 @@
             background-color: #45a049;
         }
 
-        .input-container {
-            margin-bottom: 20px;
-        }
-
-        .times-up {
-            color: red;
-            font-weight: bold;
+        .output {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
         }
     </style>
 </head>
 <body>
-
-<center>
-<img src="iGo.jpg"></center>
     <div class="container">
         <!-- Station 1 -->
         <div class="station" id="station-1">
-            <h2>Station 1 Timer</h2>
+            <h2>Station 1 Stopwatch</h2>
             <div id="timer-1">00:00</div>
-            <div class="input-container">
-                <label for="time-1">Enter time (minutes): </label>
-                <input type="number" id="time-1" value="5" min="1" />
-            </div>
             <button id="start-1">Start</button>
+            <button id="calculate-1">Calculate Time</button>
             <button id="reset-1">Reset</button>
+            <div class="output" id="output-1"></div>
         </div>
 
         <!-- Station 2 -->
         <div class="station" id="station-2">
-            <h2>Station 2 Timer</h2>
+            <h2>Station 2 Stopwatch</h2>
             <div id="timer-2">00:00</div>
-            <div class="input-container">
-                <label for="time-2">Enter time (minutes): </label>
-                <input type="number" id="time-2" value="5" min="1" />
-            </div>
             <button id="start-2">Start</button>
+            <button id="calculate-2">Calculate Time</button>
             <button id="reset-2">Reset</button>
+            <div class="output" id="output-2"></div>
         </div>
     </div>
 
-    <!-- Audio for sound notification -->
-    <audio id="beep-sound">
-        <source src="https://www.soundjay.com/button/beep-07.wav" type="audio/wav">
-    </audio>
-
     <script>
-        let endTime1, endTime2;
-        let timer1Running = false, timer2Running = false;
+        // Function to create a stopwatch for a station
+        function createStopwatch(timerId, startButtonId, calculateButtonId, resetButtonId, outputId) {
+            let timerElement = document.getElementById(timerId);
+            let startButton = document.getElementById(startButtonId);
+            let calculateButton = document.getElementById(calculateButtonId);
+            let resetButton = document.getElementById(resetButtonId);
+            let outputElement = document.getElementById(outputId);
 
-        const timer1Element = document.getElementById('timer-1');
-        const timer2Element = document.getElementById('timer-2');
-        const start1Button = document.getElementById('start-1');
-        const start2Button = document.getElementById('start-2');
-        const reset1Button = document.getElementById('reset-1');
-        const reset2Button = document.getElementById('reset-2');
-        const time1Input = document.getElementById('time-1');
-        const time2Input = document.getElementById('time-2');
-        const beepSound = document.getElementById('beep-sound');
+            let startTime = null;
+            let elapsedTime = 0;
+            let interval = null;
 
-        // Function to update the timer display
-        function updateTimerDisplay(timerElement, remainingTime) {
-            const minutes = Math.floor(remainingTime / 60);
-            const seconds = remainingTime % 60;
-            timerElement.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-        }
+            // Update the stopwatch display
+            function updateDisplay() {
+                const totalSeconds = Math.floor(elapsedTime / 1000);
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+                timerElement.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }
 
-        // Function to handle the timer end
-        function handleTimerEnd(timerElement, stationName) {
-            beepSound.play();
-            new Notification(`${stationName} Time's up! Please log out.`);
-            setTimeout(() => {
-                alert(`${stationName} timer has finished! Please log out.`);
-            }, 0); // Trigger alert after notification
-            timerElement.textContent = 'Time\'s Up!';
-        }
-
-        // Function to check and update timers
-        function checkTimers() {
-            const now = Date.now();
-
-            if (timer1Running) {
-                const remainingTime1 = Math.max(0, Math.floor((endTime1 - now) / 1000));
-                updateTimerDisplay(timer1Element, remainingTime1);
-
-                if (remainingTime1 <= 0) {
-                    handleTimerEnd(timer1Element, 'Station 1');
-                    timer1Running = false;
+            // Start the stopwatch
+            startButton.addEventListener('click', () => {
+                if (!interval) {
+                    startTime = Date.now() - elapsedTime;
+                    interval = setInterval(() => {
+                        elapsedTime = Date.now() - startTime;
+                        updateDisplay();
+                    }, 1000);
                 }
-            }
+            });
 
-            if (timer2Running) {
-                const remainingTime2 = Math.max(0, Math.floor((endTime2 - now) / 1000));
-                updateTimerDisplay(timer2Element, remainingTime2);
+            // Calculate and display total time and additional time
+            calculateButton.addEventListener('click', () => {
+                const totalSeconds = Math.floor(elapsedTime / 1000);
+                const totalMinutes = totalSeconds / 60;
+                const additionalTime = Math.max(0, totalMinutes - 15);
+                outputElement.innerHTML = `
+                    Total Time: ${totalMinutes.toFixed(2)} minutes<br>
+                    Additional Time: ${additionalTime.toFixed(2)} minutes
+                `;
+            });
 
-                if (remainingTime2 <= 0) {
-                    handleTimerEnd(timer2Element, 'Station 2');
-                    timer2Running = false;
-                }
-            }
-
-            if (timer1Running || timer2Running) {
-                requestAnimationFrame(checkTimers);
-            }
+            // Reset the stopwatch
+            resetButton.addEventListener('click', () => {
+                clearInterval(interval);
+                interval = null;
+                elapsedTime = 0;
+                updateDisplay();
+                outputElement.textContent = "";
+            });
         }
 
-        // Function to start a timer
-        function startTimer(timerElement, inputElement, isRunning, endTimeVariable) {
-            const inputTime = parseInt(inputElement.value) * 60;
-            endTimeVariable = Date.now() + inputTime * 1000;
-
-            if (timerElement === timer1Element) {
-                endTime1 = endTimeVariable;
-                timer1Running = true;
-            } else {
-                endTime2 = endTimeVariable;
-                timer2Running = true;
-            }
-
-            requestAnimationFrame(checkTimers);
-        }
-
-        // Event listeners
-        start1Button.addEventListener('click', () => startTimer(timer1Element, time1Input, timer1Running, endTime1));
-        start2Button.addEventListener('click', () => startTimer(timer2Element, time2Input, timer2Running, endTime2));
-        reset1Button.addEventListener('click', () => {
-            timer1Running = false;
-            timer1Element.textContent = "00:00";
-        });
-        reset2Button.addEventListener('click', () => {
-            timer2Running = false;
-            timer2Element.textContent = "00:00";
-        });
-
-        // Request notification permission
-        if (Notification.permission !== 'granted') {
-            Notification.requestPermission();
-        }
+        // Create stopwatches for both stations
+        createStopwatch('timer-1', 'start-1', 'calculate-1', 'reset-1', 'output-1');
+        createStopwatch('timer-2', 'start-2', 'calculate-2', 'reset-2', 'output-2');
     </script>
 </body>
 </html>
