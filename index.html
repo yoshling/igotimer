@@ -57,14 +57,59 @@
             background-color: #45a049;
         }
 
-        .output {
-            margin-top: 20px;
-            font-size: 18px;
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 300px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-content h3 {
+            margin-bottom: 10px;
             color: #333;
+        }
+
+        .modal-content p {
+            margin: 10px 0;
+            color: #555;
+        }
+
+        .close-modal {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .close-modal:hover {
+            background-color: #45a049;
         }
     </style>
 </head>
 <body>
+
+<center>
+<img src="iGo.jpg"></center>
+
     <div class="container">
         <!-- Station 1 -->
         <div class="station" id="station-1">
@@ -73,7 +118,6 @@
             <button id="start-1">Start</button>
             <button id="calculate-1">Calculate Time</button>
             <button id="reset-1">Reset</button>
-            <div class="output" id="output-1"></div>
         </div>
 
         <!-- Station 2 -->
@@ -83,18 +127,32 @@
             <button id="start-2">Start</button>
             <button id="calculate-2">Calculate Time</button>
             <button id="reset-2">Reset</button>
-            <div class="output" id="output-2"></div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <h3 id="modal-title"></h3>
+            <p id="modal-total-time"></p>
+            <p id="modal-additional-time"></p>
+            <button class="close-modal" id="close-modal">Close</button>
         </div>
     </div>
 
     <script>
         // Function to create a stopwatch for a station
-        function createStopwatch(timerId, startButtonId, calculateButtonId, resetButtonId, outputId) {
+        function createStopwatch(timerId, startButtonId, calculateButtonId, resetButtonId, stationName) {
             let timerElement = document.getElementById(timerId);
             let startButton = document.getElementById(startButtonId);
             let calculateButton = document.getElementById(calculateButtonId);
             let resetButton = document.getElementById(resetButtonId);
-            let outputElement = document.getElementById(outputId);
+
+            let modal = document.getElementById('modal');
+            let modalTitle = document.getElementById('modal-title');
+            let modalTotalTime = document.getElementById('modal-total-time');
+            let modalAdditionalTime = document.getElementById('modal-additional-time');
+            let closeModalButton = document.getElementById('close-modal');
 
             let startTime = null;
             let elapsedTime = 0;
@@ -119,15 +177,31 @@
                 }
             });
 
-            // Calculate and display total time and additional time
-            calculateButton.addEventListener('click', () => {
+            // Show the modal with timer information
+            function showModal() {
                 const totalSeconds = Math.floor(elapsedTime / 1000);
                 const totalMinutes = totalSeconds / 60;
                 const additionalTime = Math.max(0, totalMinutes - 15);
-                outputElement.innerHTML = `
-                    Total Time: ${totalMinutes.toFixed(2)} minutes<br>
-                    Additional Time: ${additionalTime.toFixed(2)} minutes
-                `;
+
+                modalTitle.textContent = `${stationName} Timer Information`;
+                modalTotalTime.textContent = `Total Time: ${totalMinutes.toFixed(2)} minutes`;
+                modalAdditionalTime.textContent = `Additional Time: ${additionalTime.toFixed(2)} minutes`;
+
+                modal.style.display = 'flex';
+            }
+
+            // Calculate and display total time and additional time
+            calculateButton.addEventListener('click', () => {
+                if (interval) {
+                    clearInterval(interval);
+                    interval = null;
+                }
+                showModal();
+            });
+
+            // Close the modal
+            closeModalButton.addEventListener('click', () => {
+                modal.style.display = 'none';
             });
 
             // Reset the stopwatch
@@ -136,13 +210,12 @@
                 interval = null;
                 elapsedTime = 0;
                 updateDisplay();
-                outputElement.textContent = "";
             });
         }
 
         // Create stopwatches for both stations
-        createStopwatch('timer-1', 'start-1', 'calculate-1', 'reset-1', 'output-1');
-        createStopwatch('timer-2', 'start-2', 'calculate-2', 'reset-2', 'output-2');
+        createStopwatch('timer-1', 'start-1', 'calculate-1', 'reset-1', 'Station 1');
+        createStopwatch('timer-2', 'start-2', 'calculate-2', 'reset-2', 'Station 2');
     </script>
 </body>
 </html>
